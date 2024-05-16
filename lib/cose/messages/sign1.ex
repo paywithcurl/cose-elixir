@@ -19,6 +19,28 @@ defmodule COSE.Messages.Sign1 do
     CBOR.encode(%CBOR.Tag{tag: 18, value: value})
   end
 
+  def sign_encode(:es256, msg, key) do
+    msg = sign(:es256, msg, key, <<>>)
+
+    value = [
+      COSE.Headers.tag_phdr(msg.phdr),
+      msg.uhdr,
+      msg.payload,
+      msg.signature
+    ]
+
+    CBOR.encode(%CBOR.Tag{tag: 18, value: value})
+  end
+
+  def sign(:es256, msg, private_key, external_aad) do
+    to_be_signed = CBOR.encode(sig_structure(msg, external_aad))
+
+    %__MODULE__{
+      msg
+      | signature: COSE.Keys.ECDSA.sign(:es256, to_be_signed, private_key)
+    }
+  end
+
   def sign(msg, key, external_aad \\ <<>>) do
     to_be_signed = CBOR.encode(sig_structure(msg, external_aad))
 
@@ -38,6 +60,16 @@ defmodule COSE.Messages.Sign1 do
     end
   end
 
+  def verify_decode(:es256, encoded_msg, key) do
+    msg = decode(encoded_msg)
+
+    if verify(:es256, msg, key, <<>>) do
+      msg
+    else
+      false
+    end
+  end
+
   def decode(encoded_msg) do
     {:ok, %CBOR.Tag{tag: 18, value: [phdr, uhdr, payload, signature]}, _} =
       CBOR.decode(encoded_msg)
@@ -48,6 +80,16 @@ defmodule COSE.Messages.Sign1 do
       payload: payload,
       signature: signature
     }
+  end
+
+  def verify(:es256, msg, public_key, external_aad) do
+    to_be_verified = CBOR.encode(sig_structure(msg, external_aad))
+
+    if COSE.Keys.ECDSA.verify(:es256, to_be_verified, msg.signature, public_key) do
+      msg
+    else
+      false
+    end
   end
 
   def verify(msg, ver_key, external_aad \\ <<>>) do

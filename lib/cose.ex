@@ -21,7 +21,8 @@ defmodule COSE do
     direct: -6,
     aes_ccm_16_64_128: 10,
     ecdh_ss_hkdf_256: -27,
-    eddsa: -8
+    eddsa: -8,
+    es256: -7
   }
   def algorithm(alg) when is_atom(alg), do: @cose_algs[alg]
   def algorithm(alg) when is_integer(alg), do: invert_map(@cose_algs)[alg]
@@ -30,7 +31,8 @@ defmodule COSE do
     alg: 1,
     kid: 4,
     iv: 5,
-    party_v_identity: -24
+    party_v_identity: -24,
+    ctyp: 3
   }
   def header(hdr) when is_atom(hdr), do: @cose_headers[hdr]
   def header(hdr) when is_integer(hdr), do: invert_map(@cose_headers)[hdr]
